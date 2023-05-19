@@ -1,7 +1,8 @@
 import sys
 import getpass
 import json
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTabWidget, QListWidget, QDialog, QDialogButtonBox, QMessageBox
 
 class NewList(QDialog):
@@ -24,50 +25,86 @@ class NewList(QDialog):
         return self.new_list_name_input.text()
     # Responsavel por pegar o nome da nova lista na classe e retorna-la para ser aderida na janela
     
-
-
-class Slaking(QWidget):
+class Slaking(QMainWindow):
     def __init__(self):
         super().__init__()
         self.lists = {}
         self.setup_ui()
+        self.setFixedSize(400, 500)
+        self.style_sets = [
+            { #Utilize as customizações que achar melhor. 
+                'app_background': 'url(imgs/kitty.png)', # O app_background é a imagem que irá aparecer no fundo do programa
+                'add_button_background': '#F98EA9', # Essa é a cor dos botões
+                'add_button_image': 'imgs\\hk.png', # Essa é a imagem que aparece nos botões
+                'item_input_background': '3px solid #F52E6F', # Essa é a borda dos botões
+            },
+            {   
+                'app_background': 'url(imgs/kuro.png)',
+                'add_button_background': '#914185',
+                'add_button_image': 'imgs\\kuromi.png',
+                'item_input_background': '3px solid #1E1E1E',
+            },
+            {   
+                'app_background': 'url(imgs/myme.png)',
+                'add_button_background': '#F298C3',
+                'add_button_image': 'imgs\\mymelody.png',
+                'item_input_background': '3px solid pink',
+            },
+            {   
+                'app_background': 'url(imgs/pompo.png)',
+                'add_button_background': '#E9CE82',
+                'add_button_image': 'imgs\\ponpon.png',
+                'item_input_background': '3px solid #8C5C0F',
+            },
+            {   
+                'app_background': 'url(imgs/cinna.png)',
+                'add_button_background': '#94D9F2',
+                'add_button_image': 'imgs\\cinnamaroll.png',
+                'item_input_background': '3px solid #22C1F5',
+            },
+            # Adicione mais conjuntos de estilos aqui...
+        ]
+        self.style_index = 0  # Índice do estilo atual
+        self.apply_styles()  # Aplica o estilo inicial
         # Conecta a função update_current_list na troca de abas
         self.tab_widget.currentChanged.connect(self.update_current_list)
+        self.setWindowIcon(QIcon("imgs/Slaking.png")) # Por motivos desconhecidos esse ícone não consegue participar da janela principal
+        
 
     def setup_ui(self):
-        self.layout = QVBoxLayout()
+        self.central_widget = QWidget(self)
+        self.setCentralWidget(self.central_widget)
 
-        self.tab_widget = QTabWidget()
+        self.layout = QVBoxLayout(self.central_widget)
 
-        self.button_container = QWidget()
+        self.tab_widget = QTabWidget(self.central_widget)
+
+        self.button_container = QWidget(self.central_widget)
         self.button_layout = QHBoxLayout(self.button_container)
         self.button_layout.setAlignment(Qt.AlignLeft)
         # Botões de nova lista e remover lista
-        self.new_list_button = QPushButton("+")
-        self.new_list_button.setFixedSize(23, 23)
-        self.remove_list_button = QPushButton("-")
-        self.remove_list_button.setFixedSize(23, 23)
+        self.new_list_button = QPushButton("+", self.button_container)
+        self.new_list_button.setFixedSize(QSize(23, 23))
+        self.remove_list_button = QPushButton("-", self.button_container)
+        self.remove_list_button.setFixedSize(QSize(23, 23))
         self.button_layout.addWidget(self.new_list_button)
         self.button_layout.addWidget(self.remove_list_button)
 
         self.layout.addWidget(self.tab_widget)
         self.layout.addWidget(self.button_container)
 
-        self.add_item_widget = QWidget()
-        self.add_item_layout = QHBoxLayout()
+        self.add_item_widget = QWidget(self.central_widget)
+        self.add_item_layout = QHBoxLayout(self.add_item_widget)
 
-        self.add_item_name_label = QLabel("Item:")
-        self.add_item_name_input = QLineEdit()
-        self.add_item_button = QPushButton("Adicionar Item")
+        self.add_item_name_label = QLabel("Item:", self.add_item_widget)
+        self.add_item_name_input = QLineEdit(self.add_item_widget)
+        self.add_item_button = QPushButton("Adicionar Item", self.add_item_widget)
 
         self.add_item_layout.addWidget(self.add_item_name_label)
         self.add_item_layout.addWidget(self.add_item_name_input)
         self.add_item_layout.addWidget(self.add_item_button)
-        self.add_item_widget.setLayout(self.add_item_layout)
 
         self.layout.addWidget(self.add_item_widget)
-
-        self.setLayout(self.layout)
 
         # Conecta as funções aos botões
         self.new_list_button.clicked.connect(self.show_new_list_dialog)
@@ -83,6 +120,65 @@ class Slaking(QWidget):
         
         self.tab_widget.currentChanged.connect(connect_item_double_clicked)
         connect_item_double_clicked()
+        self.tab_widget.currentChanged.connect(self.update_style)
+
+    def apply_styles(self):
+        current_style = self.style_sets[self.style_index]
+
+        # Estilização dos botões
+        button_style = f'QPushButton {{ \
+                            min-width: 20px; \
+                            min-height: 20px; \
+                            background-color: {current_style["add_button_background"]}; \
+                            border: 3px groove rgba(0, 0, 0, 0.08); \
+                        }} \
+                        QPushButton:hover {{ \
+                            border: 3px groove rgba(0, 0, 0, 0.15); \
+                        }} \
+                        QPushButton:pressed {{ \
+                            border: 3px groove rgba(0, 0, 0, 0.23); \
+                        }}'
+        self.new_list_button.setStyleSheet(button_style)
+        self.remove_list_button.setStyleSheet(button_style)
+        self.add_item_button.setStyleSheet(f'QPushButton {{ \
+                                                min-width: 80px; \
+                                                min-height: 25px; \
+                                                background-color: {current_style["add_button_background"]}; \
+                                                border: 3px groove rgba(0, 0, 0, 0.1); \
+                                            }} \
+                                            QPushButton:hover {{ \
+                                                border: 3px groove rgba(0, 0, 0, 0.25); \
+                                            }} \
+                                            QPushButton:pressed {{ \
+                                                border: 3px groove rgba(0, 0, 0, 0.32); \
+                                            }}')
+        # Imagem do botão
+        self.add_item_button.setIcon(QIcon(current_style["add_button_image"]))
+
+        # Estilização do widget central
+        app_style = f"QMainWindow {{ background-image: {current_style['app_background']}; \
+                               background-position: center;}}"
+        self.setStyleSheet(app_style)
+
+        list_style = f"QListWidget {{ border: {current_style['item_input_background']}; \
+                                      font: 13px; }}"
+        self.tab_widget.setStyleSheet(list_style)
+
+        # Estilização da caixa de texto "Item"
+        item_input_style = f"border: {current_style['item_input_background']}; background-color: white; padding: 5px;"
+        self.add_item_name_input.setStyleSheet(item_input_style)
+
+    def update_style(self, index):
+        num_styles = len(self.style_sets)
+    
+        # Verifica se o índice está dentro do intervalo válido
+        if 0 <= index < num_styles:
+            self.style_index = index
+        else:
+            # Caso contrário, calcula o índice considerando o loop
+            self.style_index = index % num_styles
+        
+        self.apply_styles()
 
     # Chama a classe NewList para criar uma nova lista e chama add_list para que ela seja adicionada as abas
     def show_new_list_dialog(self):
@@ -119,6 +215,7 @@ class Slaking(QWidget):
             list_widget = QListWidget()
             self.tab_widget.addTab(list_widget, list_name) # Adiciona aba 
             self.lists[list_name] = list_widget 
+            self.save_lists()
 
     def add_item(self):
         current_tab_index = self.tab_widget.currentIndex()
@@ -186,6 +283,7 @@ if __name__ == "__main__":
     window = QMainWindow()
     todo_list = Slaking()
     todo_list.load_lists() # Carrega as listas salvas anteriormente
+    todo_list.apply_styles()  # Aplicar estilos iniciais
     window.setCentralWidget(todo_list)
     user = getpass.getuser()
     window.setWindowTitle(f"Slaking de {user}")
